@@ -24,6 +24,8 @@ enum SettingID
     SupportFile_RomDatabaseDefault,
     SupportFile_VideoRDB,
     SupportFile_VideoRDBDefault,
+    SupportFile_JaboIni,
+    SupportFile_JaboIniDefault,
     SupportFile_AudioRDB,
     SupportFile_AudioRDBDefault,
     SupportFile_CheatDir,

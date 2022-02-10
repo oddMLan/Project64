@@ -4,6 +4,7 @@
 CIniFile * CSettingTypeRomDatabase::m_SettingsIniFile = nullptr;
 CIniFile * CSettingTypeRomDatabase::m_VideoIniFile = nullptr;
 CIniFile * CSettingTypeRomDatabase::m_AudioIniFile = nullptr;
+CIniFile * CSettingTypeRomDatabase::m_JaboIniFile = nullptr;
 std::string * CSettingTypeRomDatabase::m_SectionIdent = nullptr;
 
 CSettingTypeRomDatabase::CSettingTypeRomDatabase(const char * Name, uint32_t DefaultValue, bool DeleteOnDefault) :
@@ -13,7 +14,8 @@ CSettingTypeRomDatabase::CSettingTypeRomDatabase(const char * Name, uint32_t Def
     m_DefaultSetting(Default_Constant),
     m_DeleteOnDefault(DeleteOnDefault),
     m_VideoSetting(IsVideoSetting(Name)),
-    m_AudioSetting(IsAudioSetting(Name))
+    m_AudioSetting(IsAudioSetting(Name)),
+    m_JaboSetting(IsJaboSetting(Name))
 {
 }
 
@@ -24,7 +26,8 @@ CSettingTypeRomDatabase::CSettingTypeRomDatabase(const char * Name, bool Default
     m_DefaultSetting(Default_Constant),
     m_DeleteOnDefault(DeleteOnDefault),
     m_VideoSetting(IsVideoSetting(Name)),
-    m_AudioSetting(IsAudioSetting(Name))
+    m_AudioSetting(IsAudioSetting(Name)),
+    m_JaboSetting(IsJaboSetting(Name))
 {
 }
 
@@ -35,7 +38,8 @@ CSettingTypeRomDatabase::CSettingTypeRomDatabase(const char * Name, const char *
     m_DefaultSetting(Default_Constant),
     m_DeleteOnDefault(DeleteOnDefault),
     m_VideoSetting(IsVideoSetting(Name)),
-    m_AudioSetting(IsAudioSetting(Name))
+    m_AudioSetting(IsAudioSetting(Name)),
+    m_JaboSetting(IsJaboSetting(Name))
 {
 }
 
@@ -46,7 +50,8 @@ CSettingTypeRomDatabase::CSettingTypeRomDatabase(const char * Name, SettingID De
     m_DefaultSetting(DefaultSetting),
     m_DeleteOnDefault(DeleteOnDefault),
     m_VideoSetting(IsVideoSetting(Name)),
-    m_AudioSetting(IsAudioSetting(Name))
+    m_AudioSetting(IsAudioSetting(Name)),
+    m_JaboSetting(IsJaboSetting(Name))
 {
 }
 
@@ -61,6 +66,7 @@ void CSettingTypeRomDatabase::Initialize(void)
     m_SettingsIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_RomDatabase).c_str());
     m_VideoIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_VideoRDB).c_str());
     m_AudioIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_AudioRDB).c_str());
+    m_JaboIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_JaboIni).c_str());
 
     g_Settings->RegisterChangeCB(Game_IniKey, nullptr, GameChanged);
     g_Settings->RegisterChangeCB(Cmd_BaseDirectory, nullptr, BaseDirChanged);
@@ -115,6 +121,7 @@ void CSettingTypeRomDatabase::BaseDirChanged(void * /*Data */)
     m_SettingsIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_RomDatabase).c_str());
     m_VideoIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_VideoRDB).c_str());
     m_AudioIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_AudioRDB).c_str());
+    m_JaboIniFile = new CIniFile(g_Settings->LoadStringVal(SupportFile_JaboIni).c_str());
 }
 
 void CSettingTypeRomDatabase::GameChanged(void * /*Data */)
@@ -136,6 +143,10 @@ bool CSettingTypeRomDatabase::Load(uint32_t & Value) const
 	{
 		bRes = m_AudioIniFile->GetNumber(Section(), m_KeyName.c_str(), Value, Value);
 	}
+    else if (m_JaboSetting)
+    {
+        bRes = m_JaboIniFile->GetNumber(Section(), m_KeyName.c_str(), Value, Value);
+    }
 	else
 	{
 		bRes = m_SettingsIniFile->GetNumber(Section(), m_KeyName.c_str(), Value, Value);
@@ -176,6 +187,10 @@ bool CSettingTypeRomDatabase::Load(uint32_t Index, std::string & Value) const
     else if (m_AudioSetting)
     {
         bRes = m_AudioIniFile->GetString(Section(), m_KeyName.c_str(), m_DefaultStr, temp_value);
+    }
+    else if (m_JaboSetting)
+    {
+        bRes = m_JaboIniFile->GetString(Section(), m_KeyName.c_str(), m_DefaultStr, temp_value);
     }
     else
     {
@@ -232,10 +247,6 @@ void CSettingTypeRomDatabase::LoadDefault(uint32_t /*Index*/, std::string & Valu
 // Update the settings
 void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, bool Value)
 {
-    if (!g_Settings->LoadBool(Setting_RdbEditor))
-    {
-        return;
-    }
     if (m_DeleteOnDefault)
     {
         g_Notify->BreakPoint(__FILE__, __LINE__);
@@ -256,10 +267,6 @@ void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, bool Value)
 
 void CSettingTypeRomDatabase::Save(uint32_t Index, uint32_t Value)
 {
-    if (!g_Settings->LoadBool(Setting_RdbEditor))
-    {
-        return;
-    }
     if (m_DeleteOnDefault)
     {
         uint32_t defaultValue = 0;
@@ -286,10 +293,6 @@ void CSettingTypeRomDatabase::Save(uint32_t Index, uint32_t Value)
 
 void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, const std::string & Value)
 {
-    if (!g_Settings->LoadBool(Setting_RdbEditor))
-    {
-        return;
-    }
     if (m_VideoSetting)
     {
         m_VideoIniFile->SaveString(Section(), m_KeyName.c_str(), Value.c_str());
@@ -306,10 +309,6 @@ void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, const std::string & Value
 
 void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, const char * Value)
 {
-    if (!g_Settings->LoadBool(Setting_RdbEditor))
-    {
-        return;
-    }
     if (m_VideoSetting)
     {
         m_VideoIniFile->SaveString(Section(), m_KeyName.c_str(), Value);
@@ -326,10 +325,6 @@ void CSettingTypeRomDatabase::Save(uint32_t /*Index*/, const char * Value)
 
 void CSettingTypeRomDatabase::Delete(uint32_t /*Index*/)
 {
-    if (!g_Settings->LoadBool(Setting_RdbEditor))
-    {
-        return;
-    }
     if (m_VideoSetting)
     {
         m_VideoIniFile->SaveString(Section(), m_KeyName.c_str(), nullptr);
@@ -353,6 +348,16 @@ bool CSettingTypeRomDatabase::IsVideoSetting(const char * Name)
     return false;
 }
 
+bool CSettingTypeRomDatabase::IsJaboSetting(const char* Name)
+{
+    if (_strnicmp(Name, "Direct3D8-", 10) == 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+
 bool CSettingTypeRomDatabase::IsAudioSetting(const char * Name)
 {
     if (_strnicmp(Name, "Audio-", 6) == 0)
@@ -371,6 +376,10 @@ const char * CSettingTypeRomDatabase::StripNameSection(const char * Name)
     if (_strnicmp(Name, "Audio-", 6) == 0)
     {
         return &Name[6];
+    }
+    if (_strnicmp(Name, "Direct3D8-", 10) == 0)
+    {
+        return &Name[10];
     }
     return Name;
 }

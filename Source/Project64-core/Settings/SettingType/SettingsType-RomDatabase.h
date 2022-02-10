@@ -45,6 +45,7 @@ protected:
     static void BaseDirChanged(void * /*Data */);
 
     static bool IsVideoSetting(const char * Name);
+    static bool IsJaboSetting(const char * Name);
     static bool IsAudioSetting(const char * Name);
     static const char * StripNameSection(const char * Name);
     virtual const char * Section(void) const { return m_SectionIdent->c_str(); }
@@ -55,12 +56,15 @@ protected:
     const SettingID m_DefaultSetting;
     const bool m_DeleteOnDefault;
     bool m_VideoSetting;
+    bool m_JaboSetting;
     bool m_AudioSetting;
 
     static std::string * m_SectionIdent;
     static CIniFile * m_SettingsIniFile;
     static CIniFile * m_VideoIniFile;
     static CIniFile * m_AudioIniFile;
+    static CIniFile * m_JaboIniFile;
+
 
 private:
     CSettingTypeRomDatabase();

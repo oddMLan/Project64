@@ -85,6 +85,8 @@ void CSettings::AddHowToHandleSetting(const char * BaseDirectory)
     AddHandler(SupportFile_RomDatabaseDefault, new CSettingTypeRelativePath("Config", "Project64.rdb"));
     AddHandler(SupportFile_VideoRDB, new CSettingTypeApplicationPath("Settings", "VideoRDB", SupportFile_VideoRDBDefault));
     AddHandler(SupportFile_VideoRDBDefault, new CSettingTypeRelativePath("Config", "Video.rdb"));
+    AddHandler(SupportFile_JaboIni, new CSettingTypeApplicationPath("Settings", "JaboIni", SupportFile_JaboIniDefault));
+    AddHandler(SupportFile_JaboIniDefault, new CSettingTypeRelativePath("Config", "Jabo.ini"));
     AddHandler(SupportFile_AudioRDB, new CSettingTypeApplicationPath("Settings", "AudioRDB", SupportFile_AudioRDBDefault));
     AddHandler(SupportFile_AudioRDBDefault, new CSettingTypeRelativePath("Config", "Audio.rdb"));
     AddHandler(SupportFile_CheatDir, new CSettingTypeApplicationPath("Settings", "CheatDir", SupportFile_CheatDirDefault));
