@@ -75,6 +75,7 @@ enum SettingID
 	Default_RandomizeSIPIInterrupts,
 	Default_SMM_Protect_Memory,
     Default_DiskSeekTiming,
+    Default_OverClockModifier,
 
     // RDB settings
     Rdb_GoodName,
@@ -115,6 +116,7 @@ enum SettingID
     Rdb_RandomizeSIPIInterrupts,
 	Rdb_RPCKey,
     Rdb_DiskSeekTiming,
+    Rdb_OverClockModifier,
 
     // Individual game settings
     Game_IniKey,
