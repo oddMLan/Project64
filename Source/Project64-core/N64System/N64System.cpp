@@ -1052,7 +1052,7 @@ void CN64System::ExecuteCPU()
 void CN64System::ExecuteInterpret()
 {
     SetActiveSystem();
-    m_OpCodes.ExecuteCPU();
+    m_OpCodes.ExecuteOps((uint32_t)-1);
 }
 
 void CN64System::ExecuteRecompiler()

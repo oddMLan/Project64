@@ -73,10 +73,8 @@ void R4300iOp::InPermLoop()
     }
 }
 
-void R4300iOp::ExecuteCPU()
+void R4300iOp::ExecuteOps(uint32_t Cycles)
 {
-    WriteTrace(TraceN64System, TraceDebug, "Start");
-
     bool & Done = m_System.m_EndEmulation;
     PIPELINE_STAGE & PipelineStage = m_System.m_PipelineStage;
     uint64_t & JumpToLocation = m_System.m_JumpToLocation;
@@ -88,7 +86,7 @@ void R4300iOp::ExecuteCPU()
     int32_t & NextTimer = *g_NextTimer;
     bool CheckTimer = false;
 
-    while (!Done)
+    while (!Done && Cycles > 0)
     {
         if ((uint64_t)((int32_t)m_PROGRAM_COUNTER) != m_PROGRAM_COUNTER)
         {
@@ -136,16 +134,13 @@ void R4300iOp::ExecuteCPU()
             g_Debugger->CPUStep();
         }
 
-        /* if (PROGRAM_COUNTER > 0x80000300 && PROGRAM_COUNTER < 0x80380000)
-        {
-        WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str());
-        // WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s t9: %08X v1: %08X",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str(),m_GPR[0x19].UW[0],m_GPR[0x03].UW[0]);
-        // WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %d %d",m_PROGRAM_COUNTER,*g_NextTimer,g_SystemTimer->CurrentType());
-        } */
-
         (this->*Jump_Opcode[m_Opcode.op])();
         m_GPR[0].DW = 0; // MIPS $zero hard-wired to 0
         NextTimer -= CountPerOp;
+        if (Cycles != (uint32_t)-1)
+        {
+            Cycles -= CountPerOp;
+        }
 
         if (CDebugSettings::HaveDebugger())
         {
@@ -205,115 +200,7 @@ void R4300iOp::ExecuteCPU()
             g_Notify->BreakPoint(__FILE__, __LINE__);
         }
     }
-    WriteTrace(TraceN64System, TraceDebug, "Done");
-}
-
-void R4300iOp::ExecuteOps(int32_t Cycles)
-{
-    bool & Done = m_System.m_EndEmulation;
-    PIPELINE_STAGE & PipelineStage = m_System.m_PipelineStage;
-    uint64_t & JumpDelayLocation = m_System.m_JumpDelayLocation;
-    uint64_t & JumpToLocation = m_System.m_JumpToLocation;
-    bool & TestTimer = m_System.m_TestTimer;
-    CSystemEvents & SystemEvents = m_System.m_SystemEvents;
-    const bool & DoSomething = SystemEvents.DoSomething();
-    uint32_t CountPerOp = m_System.CountPerOp();
-    bool CheckTimer = false;
-
-    while (!Done)
-    {
-        if (Cycles <= 0)
-        {
-            g_SystemTimer->UpdateTimers();
-            return;
-        }
-
-        if (m_MMU.MemoryValue32((uint32_t)m_PROGRAM_COUNTER, m_Opcode.Value))
-        {
-            /*if (PROGRAM_COUNTER > 0x80000300 && PROGRAM_COUNTER< 0x80380000)
-            {
-            WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str());
-            //WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s t9: %08X v1: %08X",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str(),m_GPR[0x19].UW[0],m_GPR[0x03].UW[0]);
-            //WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %d %d",m_PROGRAM_COUNTER,*g_NextTimer,g_SystemTimer->CurrentType());
-            }*/
-            /*if (PROGRAM_COUNTER > 0x80323000 && PROGRAM_COUNTER< 0x80380000)
-            {
-            WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str());
-            //WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %s t9: %08X v1: %08X",m_PROGRAM_COUNTER,R4300iInstruction(m_PROGRAM_COUNTER, Opcode.Value).NameAndParam().c_str(),m_GPR[0x19].UW[0],m_GPR[0x03].UW[0]);
-            //WriteTraceF((TraceType)(TraceError | TraceNoHeader),"%X: %d %d",m_PROGRAM_COUNTER,*g_NextTimer,g_SystemTimer->CurrentType());
-            }*/
-            (this->*Jump_Opcode[m_Opcode.op])();
-            m_GPR[0].DW = 0; /* MIPS $zero hard-wired to 0 */
-
-            Cycles -= CountPerOp;
-            *g_NextTimer -= CountPerOp;
-
-            /*static uint32_t TestAddress = 0x80077B0C, TestValue = 0, CurrentValue = 0;
-            if (m_MMU.MemoryValue32(TestAddress, TestValue))
-            {
-            if (TestValue != CurrentValue)
-            {
-            WriteTraceF(TraceError,"%X: %X changed (%s)",PROGRAM_COUNTER,TestAddress,R4300iInstruction(PROGRAM_COUNTER, m_Opcode.Value).NameAndParam().c_str());
-            CurrentValue = TestValue;
-            }
-            }*/
-
-            switch (PipelineStage)
-            {
-            case PIPELINE_STAGE_NORMAL:
-                m_PROGRAM_COUNTER += 4;
-                break;
-            case PIPELINE_STAGE_DELAY_SLOT:
-                PipelineStage = PIPELINE_STAGE_JUMP;
-                m_PROGRAM_COUNTER += 4;
-                break;
-            case PIPELINE_STAGE_PERMLOOP_DO_DELAY:
-                PipelineStage = PIPELINE_STAGE_PERMLOOP_DELAY_DONE;
-                m_PROGRAM_COUNTER += 4;
-                break;
-            case PIPELINE_STAGE_JUMP:
-                CheckTimer = (JumpToLocation < m_PROGRAM_COUNTER || TestTimer);
-                m_PROGRAM_COUNTER = JumpToLocation;
-                PipelineStage = PIPELINE_STAGE_NORMAL;
-                if (CheckTimer)
-                {
-                    TestTimer = false;
-                    if (*g_NextTimer < 0)
-                    {
-                        g_SystemTimer->TimerDone();
-                    }
-                    if (DoSomething)
-                    {
-                        SystemEvents.ExecuteEvents();
-                    }
-                }
-                break;
-            case PIPELINE_STAGE_JUMP_DELAY_SLOT:
-                PipelineStage = PIPELINE_STAGE_JUMP;
-                m_PROGRAM_COUNTER = JumpToLocation;
-                JumpToLocation = JumpDelayLocation;
-                break;
-            case PIPELINE_STAGE_PERMLOOP_DELAY_DONE:
-                m_PROGRAM_COUNTER = JumpToLocation;
-                PipelineStage = PIPELINE_STAGE_NORMAL;
-                InPermLoop();
-                g_SystemTimer->TimerDone();
-                if (DoSomething)
-                {
-                    SystemEvents.ExecuteEvents();
-                }
-                break;
-            default:
-                g_Notify->BreakPoint(__FILE__, __LINE__);
-            }
-        }
-        else
-        {
-            m_Reg.TriggerAddressException((int32_t)m_PROGRAM_COUNTER, EXC_RMISS);
-            m_PROGRAM_COUNTER = JumpToLocation;
-            PipelineStage = PIPELINE_STAGE_NORMAL;
-        }
-    }
+    g_SystemTimer->UpdateTimers();
 }
 
 void R4300iOp::SPECIAL()

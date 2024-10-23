@@ -17,7 +17,7 @@ public:
     ~R4300iOp(void);
 
     void ExecuteCPU();
-    void ExecuteOps(int32_t Cycles);
+    void ExecuteOps(uint32_t Cycles);
     void InPermLoop();
 
     R4300iOpcode Opcode(void) const
