@@ -328,8 +328,11 @@ void CRecompiler::RecompilerMain_ChangeMemory()
 
 CCompiledFunc * CRecompiler::CompileCode()
 {
-    WriteTrace(TraceRecompiler, TraceDebug, "Start (PC: %016llX)", PROGRAM_COUNTER);
-
+    if (g_ModuleLogLevel[TraceRecompiler] >= TraceDebug)
+    {
+        WriteTrace(TraceRecompiler, TraceDebug, "Start (PC: %016llX)", PROGRAM_COUNTER);
+        m_RecompStartTime.SetToNow();
+    }
     uint32_t pAddr = 0;
     if (!m_MMU.VAddrToPAddr((uint32_t)PROGRAM_COUNTER, pAddr))
     {
@@ -392,33 +395,15 @@ CCompiledFunc * CRecompiler::CompileCode()
 
 #if defined(__aarch64__) || defined(__amd64__) || defined(_M_X64)
     g_Notify->BreakPoint(__FILE__, __LINE__);
-#else
+#endif
     if (g_ModuleLogLevel[TraceRecompiler] >= TraceDebug)
     {
-        WriteTrace(TraceRecompiler, TraceDebug, "Info->Function() = %X", Func->Function());
-        std::string dumpline;
-        uint32_t start_address = (uint32_t)(Func->Function()) & ~1;
-        for (uint8_t *ptr = (uint8_t *)start_address, *ptr_end = ((uint8_t *)start_address) + CodeLen; ptr < ptr_end; ptr++)
-        {
-            if (dumpline.empty())
-            {
-                dumpline += stdstr_f("%X: ", ptr);
-            }
-            dumpline += stdstr_f(" %02X", *ptr);
-            if ((((uint32_t)ptr - start_address) + 1) % 30 == 0)
-            {
-                WriteTrace(TraceRecompiler, TraceDebug, "%s", dumpline.c_str());
-                dumpline.clear();
-            }
-        }
-
-        if (!dumpline.empty())
-        {
-            WriteTrace(TraceRecompiler, TraceDebug, "%s", dumpline.c_str());
-        }
+        m_RecompEndTime.SetToNow();
+        uint32_t TimeTakenMicroseconds = (uint32_t)(m_RecompEndTime.GetMicroSeconds() - m_RecompStartTime.GetMicroSeconds());
+        uint32_t seconds = TimeTakenMicroseconds / 1000000;
+        uint32_t microseconds = TimeTakenMicroseconds % 1000000;
+        WriteTrace(TraceRecompiler, TraceDebug, "Done (TimeTaken: %u.%06u seconds)", seconds, microseconds);
     }
-#endif
-    WriteTrace(TraceRecompiler, TraceVerbose, "Done");
     return Func;
 }
 
