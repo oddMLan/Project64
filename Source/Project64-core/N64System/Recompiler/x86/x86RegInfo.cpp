@@ -610,7 +610,7 @@ asmjit::x86::Gp CX86RegInfo::Get_MemoryStack() const
     return x86Reg_Unknown;
 }
 
-asmjit::x86::Gp CX86RegInfo::Map_MemoryStack(asmjit::x86::Gp Reg, bool bMapRegister, bool LoadValue)
+asmjit::x86::Gp CX86RegInfo::Map_MemoryStack(const asmjit::x86::Gp & Reg, bool bMapRegister, bool LoadValue)
 {
     asmjit::x86::Gp CurrentMap = Get_MemoryStack();
     if (!bMapRegister)
@@ -631,19 +631,19 @@ asmjit::x86::Gp CX86RegInfo::Map_MemoryStack(asmjit::x86::Gp Reg, bool bMapRegis
         {
             return CurrentMap;
         }
-        Reg = FreeX86Reg();
-        if (!Reg.isValid())
+        asmjit::x86::Gp MemoryStackReg = FreeX86Reg();
+        if (!MemoryStackReg.isValid())
         {
             g_Notify->DisplayError("Map_MemoryStack\n\nOut of registers");
             g_Notify->BreakPoint(__FILE__, __LINE__);
         }
-        SetX86Mapped(GetIndexFromX86Reg(Reg), CX86RegInfo::Stack_Mapped);
-        m_CodeBlock.Log("    regcache: allocate %s as Memory Stack", CX86Ops::x86_Name(Reg));
+        SetX86Mapped(GetIndexFromX86Reg(MemoryStackReg), CX86RegInfo::Stack_Mapped);
+        m_CodeBlock.Log("    regcache: allocate %s as Memory Stack", CX86Ops::x86_Name(MemoryStackReg));
         if (LoadValue)
         {
-            m_Assembler.MoveVariableToX86reg(Reg, &g_Recompiler->MemoryStackPos(), "MemoryStack");
+            m_Assembler.MoveVariableToX86reg(MemoryStackReg, &g_Recompiler->MemoryStackPos(), "MemoryStack");
         }
-        return Reg;
+        return MemoryStackReg;
     }
 
     // Move to a register/allocate register

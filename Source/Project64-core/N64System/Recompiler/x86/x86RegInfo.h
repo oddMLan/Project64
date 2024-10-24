@@ -97,7 +97,7 @@ public:
     void Map_GPR_64bit(int32_t MipsReg, int32_t MipsRegToLoad);
     asmjit::x86::Gp Map_FPStatusReg();
     asmjit::x86::Gp Get_MemoryStack() const;
-    asmjit::x86::Gp Map_MemoryStack(asmjit::x86::Gp Reg, bool bMapRegister, bool LoadValue = true);
+    asmjit::x86::Gp Map_MemoryStack(const asmjit::x86::Gp & Reg, bool bMapRegister, bool LoadValue = true);
     asmjit::x86::Gp Map_TempReg(asmjit::x86::Gp Reg, int32_t MipsReg, bool LoadHiWord, bool Reg8Bit);
     void ProtectGPR(uint32_t MipsReg);
     void UnProtectGPR(uint32_t MipsReg);
@@ -108,11 +108,11 @@ public:
     bool UnMap_X86reg(const asmjit::x86::Gp & Reg);
     void WriteBackRegisters();
 
-    asmjit::x86::Gp GetMipsRegMapLo(int32_t Reg) const
+    const asmjit::x86::Gp & GetMipsRegMapLo(int32_t Reg) const
     {
         return m_RegMapLo[Reg];
     }
-    asmjit::x86::Gp GetMipsRegMapHi(int32_t Reg) const
+    const asmjit::x86::Gp & GetMipsRegMapHi(int32_t Reg) const
     {
         return m_RegMapHi[Reg];
     }
