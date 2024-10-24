@@ -904,6 +904,13 @@ uint32_t CCodeBlock::Finilize(CRecompMemory & RecompMem)
         Log("Native entry point: %X", m_CompiledLocation);
         Log("Start of block: %X", VAddrEnter());
         Log("Number of sections: %d", NoOfSections());
+        Log("====== Asm Code ======");
+        for (uint32_t Addr = m_VAddrEnter; Addr < m_VAddrLast; Addr += 4)
+        {
+            R4300iOpcode Opcode;
+            g_MMU->MemoryValue32(Addr, Opcode.Value);
+            Log("%08X: %s", Addr, R4300iInstruction(Addr, Opcode.Value).NameAndParam().c_str());
+        }
         Log("====== Recompiled code ======");
         m_CodeLog += CodeLog;
     }
