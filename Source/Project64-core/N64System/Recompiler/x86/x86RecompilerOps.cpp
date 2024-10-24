@@ -9546,7 +9546,6 @@ void CX86RecompilerOps::CompileExit(uint64_t JumpPC, uint64_t TargetPC, CRegInfo
             m_Assembler.test(asmjit::x86::eax, 3);
             asmjit::Label ValidPCJump = m_Assembler.newLabel();
             m_Assembler.JeLabel("", ValidPCJump);
-            m_Assembler.X86BreakPoint(__FILE__, __LINE__);
             m_Assembler.push(1);
             m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, (void *)(((uint64_t)&g_Reg->m_PROGRAM_COUNTER) + 4), "PROGRAM_COUNTER + 4");
             m_Assembler.push(asmjit::x86::edx);
