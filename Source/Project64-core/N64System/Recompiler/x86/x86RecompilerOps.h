@@ -268,8 +268,8 @@ private:
     CX86RecompilerOps & operator=(const CX86RecompilerOps &);
 
     asmjit::x86::Gp BaseOffsetAddress(bool UseBaseRegister);
-    void CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, asmjit::x86::Gp ValueReg, const asmjit::x86::Gp & ValueRegHi, uint8_t ValueSize, bool SignExtend);
-    void CompileStoreMemoryValue(asmjit::x86::Gp AddressReg, asmjit::x86::Gp ValueReg, const asmjit::x86::Gp & ValueRegHi, uint64_t Value, uint8_t ValueSize);
+    void CompileLoadMemoryValue(asmjit::x86::Gp & AddressReg, const asmjit::x86::Gp & ValueReg, const asmjit::x86::Gp & ValueRegHi, uint8_t ValueSize, bool SignExtend);
+    void CompileStoreMemoryValue(asmjit::x86::Gp AddressReg, const asmjit::x86::Gp & ValueReg, const asmjit::x86::Gp & ValueRegHi, uint64_t Value, uint8_t ValueSize);
     void COP1_D_Opcode(void (CX86Ops::*Instruction)(void));
     void COP1_D_Opcode(void (CX86Ops::*Instruction)(const asmjit::x86::Mem &));
     void COP1_S_Opcode(void (CX86Ops::*Instruction)(void));
