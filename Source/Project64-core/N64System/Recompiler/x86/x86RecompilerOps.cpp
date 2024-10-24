@@ -4518,7 +4518,7 @@ void CX86RecompilerOps::SPECIAL_JR()
         R4300iOpcode DelaySlot;
         if (g_MMU->MemoryValue32((uint32_t)(m_CompilePC + 4), DelaySlot.Value) && R4300iInstruction(m_CompilePC, m_Opcode.Value).DelaySlotEffectsCompare(DelaySlot.Value))
         {
-            CompileExit(m_CompilePC, (uint64_t)-1, m_RegWorkingSet, ExitReason_Normal, true, nullptr);
+            CompileExit(m_CompilePC, (uint64_t)-1, m_RegWorkingSet, ExitReason_CheckPCAlignment, true, nullptr);
         }
         else
         {
@@ -4535,7 +4535,7 @@ void CX86RecompilerOps::SPECIAL_JR()
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, false, false));
             }
-            CompileExit((uint64_t)-1, (uint64_t)-1, m_RegWorkingSet, ExitReason_Normal, true, nullptr);
+            CompileExit((uint64_t)-1, (uint64_t)-1, m_RegWorkingSet, ExitReason_CheckPCAlignment, true, nullptr);
             if (m_Section->m_JumpSection)
             {
                 m_Section->GenerateSectionLinkage();
@@ -4604,7 +4604,7 @@ void CX86RecompilerOps::SPECIAL_JALR()
         if (g_MMU->MemoryValue32((uint32_t)(m_CompilePC + 4), DelaySlot.Value) &&
             R4300iInstruction(m_CompilePC, m_Opcode.Value).DelaySlotEffectsCompare(DelaySlot.Value))
         {
-            CompileExit(m_CompilePC, (uint64_t)-1, m_RegWorkingSet, ExitReason_Normal, true, nullptr);
+            CompileExit(m_CompilePC, (uint64_t)-1, m_RegWorkingSet, ExitReason_CheckPCAlignment, true, nullptr);
         }
         else
         {
@@ -4621,7 +4621,7 @@ void CX86RecompilerOps::SPECIAL_JALR()
             {
                 m_Assembler.MoveX86regToVariable(&m_Reg.m_PROGRAM_COUNTER, "PROGRAM_COUNTER", m_RegWorkingSet.Map_TempReg(x86Reg_Unknown, m_Opcode.rs, false, false));
             }
-            CompileExit((uint64_t)-1, (uint64_t)-1, m_RegWorkingSet, ExitReason_Normal, true, nullptr);
+            CompileExit((uint64_t)-1, (uint64_t)-1, m_RegWorkingSet, ExitReason_CheckPCAlignment, true, nullptr);
             if (m_Section->m_JumpSection)
             {
                 m_Section->GenerateSectionLinkage();
@@ -5846,7 +5846,9 @@ void CX86RecompilerOps::SPECIAL_OR()
 void CX86RecompilerOps::SPECIAL_XOR()
 {
     if (m_Opcode.rd == 0)
+    {
         return;
+    }
 
     if (m_Opcode.rt == m_Opcode.rs)
     {
@@ -9531,23 +9533,30 @@ void CX86RecompilerOps::CompileExit(uint64_t JumpPC, uint64_t TargetPC, CRegInfo
     switch (reason)
     {
     case ExitReason_Normal:
+    case ExitReason_CheckPCAlignment:
     case ExitReason_NormalNoSysCheck:
         ExitRegSet.SetBlockCycleCount(0);
-        if (TargetPC != (uint64_t)-1)
+        if (reason == ExitReason_Normal && (TargetPC == (uint64_t)-1 || TargetPC <= JumpPC))
         {
-            if (TargetPC <= JumpPC && reason == ExitReason_Normal)
-            {
-                m_CodeBlock.Log("CompileSystemCheck 1");
-                CompileSystemCheck((uint32_t)-1, ExitRegSet);
-            }
+            CompileSystemCheck((uint32_t)-1, ExitRegSet);
         }
-        else
+        if (reason == ExitReason_CheckPCAlignment)
         {
-            if (reason == ExitReason_Normal)
-            {
-                m_CodeBlock.Log("CompileSystemCheck 2");
-                CompileSystemCheck((uint32_t)-1, ExitRegSet);
-            }
+            m_Assembler.MoveVariableToX86reg(asmjit::x86::eax, &g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER");
+            m_Assembler.test(asmjit::x86::eax, 3);
+            asmjit::Label ValidPCJump = m_Assembler.newLabel();
+            m_Assembler.JeLabel("", ValidPCJump);
+            m_Assembler.X86BreakPoint(__FILE__, __LINE__);
+            m_Assembler.push(1);
+            m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, (void *)(((uint64_t)&g_Reg->m_PROGRAM_COUNTER) + 4), "PROGRAM_COUNTER + 4");
+            m_Assembler.push(asmjit::x86::edx);
+            m_Assembler.push(asmjit::x86::eax);
+            m_Assembler.CallThis((uint32_t)g_Reg, AddressOf(&CRegisters::DoAddressError), "CRegisters::DoAddressError", 12);
+            m_Assembler.MoveVariableToX86reg(asmjit::x86::edx, &g_System->m_JumpToLocation, "System->m_JumpToLocation");
+            m_Assembler.MoveX86regToVariable(&g_Reg->m_PROGRAM_COUNTER, "PROGRAM_COUNTER", asmjit::x86::edx);
+            m_Assembler.MoveConstToVariable(&g_System->m_PipelineStage, "g_System->m_PipelineStage", PIPELINE_STAGE_NORMAL);
+            ExitCodeBlock();
+            m_Assembler.bind(ValidPCJump);
         }
         ExitCodeBlock();
         break;

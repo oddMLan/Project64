@@ -10,6 +10,7 @@ enum ExitReason
 {
     ExitReason_Normal,
     ExitReason_NormalNoSysCheck,
+    ExitReason_CheckPCAlignment,
     ExitReason_DoCPUAction,
     ExitReason_COP1Unuseable,
     ExitReason_DoSysCall,
