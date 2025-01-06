@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "N64System.h"
+
 #include <time.h>
 
 CNotificationImp & Notify(void)
@@ -79,7 +81,11 @@ void CNotificationImp::DisplayError(const char * Message) const
     {
         Parent = reinterpret_cast<HWND>(m_hWnd->GetWindowHandle());
     }
-    MessageBox(Parent, stdstr(Message).ToUTF16().c_str(), wGS(MSG_MSGBOX_ERROR_TITLE).c_str(), MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+    int res = MessageBox(Parent, stdstr(stdstr(Message) + "\n\nPress OK to reload last save state").ToUTF16().c_str(), wGS(MSG_MSGBOX_ERROR_TITLE).c_str(), MB_OKCANCEL | MB_ICONERROR | MB_SETFOREGROUND);
+    if (res == IDOK)
+    {
+        g_BaseSystem->LoadState();
+    }
 }
 
 void CNotificationImp::DisplayMessage(int DisplayTime, LanguageStringID StringID) const
